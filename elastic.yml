@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch-logging
+  namespace: logging
+spec:
+  selector:
+    matchLabels:
+      component: elasticsearch-logging
+  template:
+    metadata:
+      labels:
+        component: elasticsearch-logging
+    spec:
+      containers:
+      - name: elasticsearch-logging
+        image: docker.elastic.co/elasticsearch/elasticsearch:6.5.4
+        env:
+        - name: discovery.type
+          value: single-node
+        ports:
+        - containerPort: 9200
+          name: http
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 500m
+            memory: 4Gi
+          requests:
+            cpu: 500m
+            memory: 4Gi
+        volumeMounts:
+        - name: persistent-storage
+          mountPath: /usr/share/elasticsearch/data
+      volumes: 
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName: azurefile-pvc-02
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elasticsearch-logging
+  namespace: logging
+  labels:
+    service: elasticsearch-logging
+spec:
+  type: LoadBalancer
+  selector:
+    component: elasticsearch-logging
+  ports:
+  - port: 9200
+    targetPort: 9200
+
+
